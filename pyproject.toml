@@ -1,0 +1,26 @@
+[project]
+name = "celeste-image-edit"
+version = "0.1.0"
+description = "Image editing across providers for Celeste"
+requires-python = ">=3.13"
+dependencies = [
+  "celeste-core>=0.1.0",
+  "google-genai>=0.1.0",
+  "pydantic>=2.8.2",
+  "Pillow",
+  "replicate>=0.31.0",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.uv.sources]
+celeste-core = { workspace = true }
+

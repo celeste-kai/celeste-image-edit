@@ -4,21 +4,15 @@ Celeste Image Generation: A unified image generation interface for multiple prov
 
 from typing import Any
 
-from .base import BaseImageEditor
-
-from .core.enums import ImageEditProvider
-from .core.types import Image
+from celeste_core import Provider, list_models
+from celeste_core.base.image_editor import BaseImageEditor
+from celeste_core.config.settings import settings
+from celeste_core.enums.capability import Capability
 
 __version__ = "0.1.0"
 
-SUPPORTED_PROVIDERS = [
-    "google",
-    "openai",
-    "replicate",
-]
 
-
-def create_image_editor(provider: str, **kwargs: Any) -> BaseImageEditor:
+def create_image_editor(provider: str | Provider, **kwargs: Any) -> BaseImageEditor:
     """
     Factory function to create an image generator instance based on the provider.
 
@@ -29,32 +23,42 @@ def create_image_editor(provider: str, **kwargs: Any) -> BaseImageEditor:
     Returns:
         An instance of an image generator
     """
-    # Convert Provider enum to string if needed
-    if isinstance(provider, ImageEditProvider):
-        provider = provider.value
+    provider_enum: Provider = (
+        provider if isinstance(provider, Provider) else Provider(provider)
+    )
 
-    if provider not in SUPPORTED_PROVIDERS:
-        raise ValueError(f"Unsupported provider: {provider}")
+    # Ensure there is at least one registered model for this provider/capability
+    if not list_models(provider=provider_enum, capability=Capability.IMAGE_EDIT):
+        available = {
+            m.provider.value for m in list_models(capability=Capability.IMAGE_EDIT)
+        }
+        raise ValueError(
+            f"No IMAGE_EDIT models registered for provider '{provider_enum.value}'. "
+            f"Available providers: {sorted(available)}"
+        )
 
-    if provider == "google":
-        from .providers.google import GoogleImageEditor
-        return GoogleImageEditor(**kwargs)
-    
-    if provider == "openai":
-        from .providers.openai import OpenAIImageEditor
-        return OpenAIImageEditor(**kwargs)
-    
-    if provider == "replicate":
-        from .providers.replicate import ReplicateImageEditor
-        return ReplicateImageEditor(**kwargs)
+    # Validate environment for the chosen provider
+    settings.validate_for_provider(provider_enum.value)
 
-    raise ValueError(f"Provider {provider} not implemented")
+    mapping = {
+        Provider.GOOGLE: (".providers.google", "GoogleImageEditor"),
+        Provider.REPLICATE: (".providers.replicate", "ReplicateImageEditor"),
+        Provider.OPENAI: (".providers.openai", "OpenAIImageEditor"),
+    }
+
+    if provider_enum not in mapping:
+        raise ValueError(
+            f"Provider '{provider_enum.value}' is not wired yet in image-edit."
+        )
+    module_path, class_name = mapping[provider_enum]
+    module = __import__(f"celeste_image_edit{module_path}", fromlist=[class_name])
+    editor_class = getattr(module, class_name)
+    return editor_class(**kwargs)
 
 
 __all__ = [
     "create_image_editor",
     "BaseImageEditor",
-    "ImageEditProvider",
-    "Image",
+    "Provider",
     "__version__",
 ]
