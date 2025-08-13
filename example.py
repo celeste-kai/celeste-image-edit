@@ -1,45 +1,51 @@
-import streamlit as st
-import os
-from pathlib import Path
 import asyncio
+import os
 
+import streamlit as st
+from celeste_core import ImageArtifact, Provider, list_models
+from celeste_core.enums.capability import Capability
+from celeste_core.enums.capability import Capability as Cap
+from celeste_core.models.registry import list_models as list_models_core
 from celeste_image_edit import create_image_editor
-from celeste_image_edit.core.enums import ImageEditProvider, GoogleEditModel, OpenAIEditModel, ReplicateEditModel
-from celeste_image_edit.core.types import Image
 
 st.title("Celeste Image Edit")
 
-PROVIDER_MODEL_MAP = {
-    ImageEditProvider.GOOGLE.name: GoogleEditModel,
-    ImageEditProvider.OPENAI.name: OpenAIEditModel,
-    ImageEditProvider.REPLICATE.name: ReplicateEditModel
-}
+# Derive providers that have IMAGE_EDIT capability
+PROVIDERS = sorted(
+    {m.provider for m in list_models_core(capability=Cap.IMAGE_EDIT)},
+    key=lambda p: p.value,
+)
 
 with st.sidebar:
     image_edit_provider = st.selectbox(
-        "Select provider",
-        [p.name for p in list(ImageEditProvider)],
-        format_func=lambda x: ImageEditProvider[x].name,
-        key="provider"
+        "Select provider", [p.name for p in PROVIDERS], key="provider"
     )
 
-    image_edit_model = st.selectbox(
-        "Select model",
-        [m.name for m in PROVIDER_MODEL_MAP[image_edit_provider]],
-        key="model"
+    models = list_models(
+        provider=Provider[image_edit_provider], capability=Capability.IMAGE_EDIT
     )
+    display = [m.display_name or m.id for m in models]
+    id_by_display = {d: models[i].id for i, d in enumerate(display)}
+    selected_display = st.selectbox("Select model", display, key="model")
 
-model_enum = PROVIDER_MODEL_MAP[image_edit_provider]
 image_editor = create_image_editor(
-    provider=ImageEditProvider[image_edit_provider].value,
-    model=model_enum[image_edit_model].value
+    provider=Provider[image_edit_provider], model=id_by_display[selected_display]
 )
 
-uploaded_file = st.file_uploader("Choose an image", type=['jpg', 'jpeg', 'png']) or st.selectbox("Or select from data", [f"data/{f}" for f in os.listdir("data") if f.endswith(('.jpg', '.png'))])
+uploaded_file = st.file_uploader(
+    "Choose an image", type=["jpg", "jpeg", "png"]
+) or st.selectbox(
+    "Or select from data",
+    [f"data/{f}" for f in os.listdir("data") if f.endswith((".jpg", ".png"))],
+)
 if uploaded_file:
-    image_data = uploaded_file.read() if hasattr(uploaded_file, 'read') else open(uploaded_file, 'rb').read()
+    image_data = (
+        uploaded_file.read()
+        if hasattr(uploaded_file, "read")
+        else open(uploaded_file, "rb").read()
+    )
     st.image(image_data)
-    image = Image(data=image_data)
+    image = ImageArtifact(data=image_data)
 
 prompt = st.text_input("Edit prompt", value="Put the image in black and white")
 
