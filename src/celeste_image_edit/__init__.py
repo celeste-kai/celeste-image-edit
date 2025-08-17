@@ -29,13 +29,8 @@ def create_image_editor(provider: str | Provider, **kwargs: Any) -> BaseImageEdi
 
     # Ensure there is at least one registered model for this provider/capability
     if not list_models(provider=provider_enum, capability=Capability.IMAGE_EDIT):
-        available = {
-            m.provider.value for m in list_models(capability=Capability.IMAGE_EDIT)
-        }
-        raise ValueError(
-            f"No IMAGE_EDIT models registered for provider '{provider_enum.value}'. "
-            f"Available providers: {sorted(available)}"
-        )
+        msg = f"No models for provider {provider_enum} with capability IMAGE_EDIT"
+        raise ValueError(msg)
 
     # Validate environment for the chosen provider
     settings.validate_for_provider(provider_enum.value)
@@ -47,9 +42,7 @@ def create_image_editor(provider: str | Provider, **kwargs: Any) -> BaseImageEdi
     }
 
     if provider_enum not in mapping:
-        raise ValueError(
-            f"Provider '{provider_enum.value}' is not wired yet in image-edit."
-        )
+        raise ValueError(f"No editor mapping for provider: {provider_enum}")
     module_path, class_name = mapping[provider_enum]
     module = __import__(f"celeste_image_edit{module_path}", fromlist=[class_name])
     editor_class = getattr(module, class_name)

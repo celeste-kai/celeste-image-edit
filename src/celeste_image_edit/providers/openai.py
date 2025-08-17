@@ -18,8 +18,8 @@ class OpenAIImageEditor(BaseImageEditor):
         # Base initializer intentionally not called because it's abstract
         self.client = OpenAI(api_key=settings.openai.api_key)
         self.model_name = model
-        if not supports(self.model_name, Capability.IMAGE_EDIT):
-            raise ValueError(f"Model '{self.model_name}' does not support IMAGE_EDIT")
+        # Non-raising validation; store support state for callers to inspect
+        self.is_supported = supports(self.model_name, Capability.IMAGE_EDIT)
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any

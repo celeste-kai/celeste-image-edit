@@ -17,8 +17,7 @@ class GoogleImageEditor(BaseImageEditor):
     ) -> None:
         self.client = genai.Client(api_key=settings.google.api_key)
         self.model_name = model
-        if not supports(self.model_name, Capability.IMAGE_EDIT):
-            raise ValueError(f"Model '{self.model_name}' does not support IMAGE_EDIT")
+        self.is_supported = supports(self.model_name, Capability.IMAGE_EDIT)
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any
@@ -46,4 +45,5 @@ class GoogleImageEditor(BaseImageEditor):
                     },
                 )
 
-        raise RuntimeError("No edited image returned by provider")
+        # Non-raising: return empty artifact if provider returned no image
+        return ImageArtifact(data=None, metadata={"model": self.model_name})
