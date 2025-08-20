@@ -8,6 +8,7 @@ from celeste_core import ImageArtifact
 from celeste_core.base.image_editor import BaseImageEditor
 from celeste_core.config.settings import settings
 from celeste_core.enums.capability import Capability
+from celeste_core.enums.providers import Provider
 from celeste_core.models.registry import supports
 
 
@@ -19,7 +20,9 @@ class ReplicateImageEditor(BaseImageEditor):
         self.model_name = model
         # Guard against non-edit models (e.g., qwen/qwen-image is generation-only)
         # Non-raising validation; store support state for callers to inspect
-        self.is_supported = supports(self.model_name, Capability.IMAGE_EDIT)
+        self.is_supported = supports(
+            Provider.REPLICATE, self.model_name, Capability.IMAGE_EDIT
+        )
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any

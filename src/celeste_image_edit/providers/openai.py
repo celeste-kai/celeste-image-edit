@@ -9,6 +9,7 @@ from celeste_core import ImageArtifact
 from celeste_core.base.image_editor import BaseImageEditor
 from celeste_core.config.settings import settings
 from celeste_core.enums.capability import Capability
+from celeste_core.enums.providers import Provider
 from celeste_core.models.registry import supports
 from openai import OpenAI
 
@@ -19,7 +20,9 @@ class OpenAIImageEditor(BaseImageEditor):
         self.client = OpenAI(api_key=settings.openai.api_key)
         self.model_name = model
         # Non-raising validation; store support state for callers to inspect
-        self.is_supported = supports(self.model_name, Capability.IMAGE_EDIT)
+        self.is_supported = supports(
+            Provider.OPENAI, self.model_name, Capability.IMAGE_EDIT
+        )
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any
@@ -41,9 +44,13 @@ class OpenAIImageEditor(BaseImageEditor):
                         ),
                     )
             else:
+                # OpenAI needs a file-like object with a name attribute
+                # for MIME type detection
+                image_buffer = io.BytesIO(image.data)
+                image_buffer.name = "image.png"  # Add name for MIME type
                 resp = self.client.images.edit(
                     model=self.model_name,
-                    image=io.BytesIO(image.data),
+                    image=image_buffer,
                     prompt=prompt,
                     size=kwargs.get("size", "1024x1024"),
                     # quality only for some models; pass-through if provided
