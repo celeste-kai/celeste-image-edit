@@ -6,6 +6,7 @@ from celeste_core import ImageArtifact
 from celeste_core.base.image_editor import BaseImageEditor
 from celeste_core.config.settings import settings
 from celeste_core.enums.capability import Capability
+from celeste_core.enums.providers import Provider
 from celeste_core.models.registry import supports
 from google import genai
 from google.genai import types
@@ -17,7 +18,9 @@ class GoogleImageEditor(BaseImageEditor):
     ) -> None:
         self.client = genai.Client(api_key=settings.google.api_key)
         self.model_name = model
-        self.is_supported = supports(self.model_name, Capability.IMAGE_EDIT)
+        self.is_supported = supports(
+            Provider.GOOGLE, self.model_name, Capability.IMAGE_EDIT
+        )
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any
