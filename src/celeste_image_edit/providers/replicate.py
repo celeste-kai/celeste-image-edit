@@ -17,11 +17,11 @@ class ReplicateImageEditor(BaseImageEditor):
         self, model: str = "black-forest-labs/flux-kontext-pro", **kwargs: Any
     ) -> None:
         self.client = replicate.Client(api_token=settings.replicate.api_token)
-        self.model_name = model
+        self.model = model
         # Guard against non-edit models (e.g., qwen/qwen-image is generation-only)
         # Non-raising validation; store support state for callers to inspect
         self.is_supported = supports(
-            Provider.REPLICATE, self.model_name, Capability.IMAGE_EDIT
+            Provider.REPLICATE, self.model, Capability.IMAGE_EDIT
         )
 
     async def edit_image(
@@ -30,7 +30,7 @@ class ReplicateImageEditor(BaseImageEditor):
         # Choose the most likely input key; allow override,
         # but we will fallback across common keys
         preferred_key: str | None = kwargs.pop("input_key", None)
-        default_key = "input_image" if "kontext" in self.model_name else "image"
+        default_key = "input_image" if "kontext" in self.model else "image"
         candidate_keys = [
             k
             for k in [
@@ -97,7 +97,7 @@ class ReplicateImageEditor(BaseImageEditor):
             image_value = _prepare_image_value(image)
 
             output = self.client.run(
-                self.model_name,
+                self.model,
                 input={
                     "prompt": prompt,
                     key: image_value,
@@ -115,7 +115,7 @@ class ReplicateImageEditor(BaseImageEditor):
         return ImageArtifact(
             data=image_bytes,
             metadata={
-                "model": self.model_name,
+                "model": self.model,
                 **({"output_url": output_url} if output_url else {}),
             },
         )

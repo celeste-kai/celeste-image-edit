@@ -17,10 +17,8 @@ class GoogleImageEditor(BaseImageEditor):
         self, model: str = "gemini-2.0-flash-preview-image-generation", **kwargs: Any
     ) -> None:
         self.client = genai.Client(api_key=settings.google.api_key)
-        self.model_name = model
-        self.is_supported = supports(
-            Provider.GOOGLE, self.model_name, Capability.IMAGE_EDIT
-        )
+        self.model = model
+        self.is_supported = supports(Provider.GOOGLE, self.model, Capability.IMAGE_EDIT)
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any
@@ -31,7 +29,7 @@ class GoogleImageEditor(BaseImageEditor):
             img = PIL.Image.open(io.BytesIO(image.data))
 
         response = await self.client.aio.models.generate_content(
-            model=self.model_name,
+            model=self.model,
             contents=[prompt, img],
             config=types.GenerateContentConfig(response_modalities=["IMAGE", "TEXT"]),
         )
@@ -49,4 +47,4 @@ class GoogleImageEditor(BaseImageEditor):
                 )
 
         # Non-raising: return empty artifact if provider returned no image
-        return ImageArtifact(data=None, metadata={"model": self.model_name})
+        return ImageArtifact(data=None, metadata={"model": self.model})

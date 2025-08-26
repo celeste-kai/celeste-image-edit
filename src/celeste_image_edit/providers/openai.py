@@ -18,11 +18,9 @@ class OpenAIImageEditor(BaseImageEditor):
     def __init__(self, model: str = "gpt-image-1", **kwargs: Any) -> None:
         # Base initializer intentionally not called because it's abstract
         self.client = OpenAI(api_key=settings.openai.api_key)
-        self.model_name = model
+        self.model = model
         # Non-raising validation; store support state for callers to inspect
-        self.is_supported = supports(
-            Provider.OPENAI, self.model_name, Capability.IMAGE_EDIT
-        )
+        self.is_supported = supports(Provider.OPENAI, self.model, Capability.IMAGE_EDIT)
 
     async def edit_image(
         self, prompt: str, image: ImageArtifact, **kwargs: Any
@@ -32,7 +30,7 @@ class OpenAIImageEditor(BaseImageEditor):
             if image.path:
                 with open(image.path, "rb") as img_file:
                     resp = self.client.images.edit(
-                        model=self.model_name,
+                        model=self.model,
                         image=img_file,
                         prompt=prompt,
                         size=kwargs.get("size", "1024x1024"),
@@ -49,7 +47,7 @@ class OpenAIImageEditor(BaseImageEditor):
                 image_buffer = io.BytesIO(image.data)
                 image_buffer.name = "image.png"  # Add name for MIME type
                 resp = self.client.images.edit(
-                    model=self.model_name,
+                    model=self.model,
                     image=image_buffer,
                     prompt=prompt,
                     size=kwargs.get("size", "1024x1024"),
@@ -64,6 +62,6 @@ class OpenAIImageEditor(BaseImageEditor):
         return ImageArtifact(
             data=image_bytes,
             metadata={
-                "model": self.model_name,
+                "model": self.model,
             },
         )
