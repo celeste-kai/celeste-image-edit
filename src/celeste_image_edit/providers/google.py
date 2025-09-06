@@ -13,20 +13,13 @@ from google.genai import types
 
 
 class GoogleImageEditor(BaseImageEditor):
-    def __init__(
-        self, model: str = "gemini-2.0-flash-preview-image-generation", **kwargs: Any
-    ) -> None:
+    def __init__(self, model: str = "gemini-2.0-flash-preview-image-generation", **kwargs: Any) -> None:  # noqa: ARG002
         self.client = genai.Client(api_key=settings.google.api_key)
         self.model = model
         self.is_supported = supports(Provider.GOOGLE, self.model, Capability.IMAGE_EDIT)
 
-    async def edit_image(
-        self, prompt: str, image: ImageArtifact, **kwargs: Any
-    ) -> ImageArtifact:
-        if image.path:
-            img = PIL.Image.open(image.path)
-        else:
-            img = PIL.Image.open(io.BytesIO(image.data))
+    async def edit_image(self, prompt: str, image: ImageArtifact, **kwargs: Any) -> ImageArtifact:  # noqa: ARG002
+        img = PIL.Image.open(image.path) if image.path else PIL.Image.open(io.BytesIO(image.data))
 
         response = await self.client.aio.models.generate_content(
             model=self.model,
@@ -40,9 +33,7 @@ class GoogleImageEditor(BaseImageEditor):
                     data=part.inline_data.data,
                     metadata={
                         "model": response.model_version,
-                        "total_tokens": getattr(
-                            response.usage_metadata, "total_token_count", 0
-                        ),
+                        "total_tokens": getattr(response.usage_metadata, "total_token_count", 0),
                     },
                 )
 

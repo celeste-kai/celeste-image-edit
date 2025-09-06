@@ -15,16 +15,14 @@ from openai import OpenAI
 
 
 class OpenAIImageEditor(BaseImageEditor):
-    def __init__(self, model: str = "gpt-image-1", **kwargs: Any) -> None:
+    def __init__(self, model: str = "gpt-image-1", **kwargs: Any) -> None:  # noqa: ARG002
         # Base initializer intentionally not called because it's abstract
         self.client = OpenAI(api_key=settings.openai.api_key)
         self.model = model
         # Non-raising validation; store support state for callers to inspect
         self.is_supported = supports(Provider.OPENAI, self.model, Capability.IMAGE_EDIT)
 
-    async def edit_image(
-        self, prompt: str, image: ImageArtifact, **kwargs: Any
-    ) -> ImageArtifact:
+    async def edit_image(self, prompt: str, image: ImageArtifact, **kwargs: Any) -> ImageArtifact:
         def _edit_sync() -> bytes:
             # Handle file path vs raw bytes
             if image.path:
@@ -35,11 +33,7 @@ class OpenAIImageEditor(BaseImageEditor):
                         prompt=prompt,
                         size=kwargs.get("size", "1024x1024"),
                         # quality only for some models; pass-through if provided
-                        **(
-                            {"quality": kwargs["quality"]}
-                            if "quality" in kwargs
-                            else {}
-                        ),
+                        **({"quality": kwargs["quality"]} if "quality" in kwargs else {}),
                     )
             else:
                 # OpenAI needs a file-like object with a name attribute

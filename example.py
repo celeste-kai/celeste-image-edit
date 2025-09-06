@@ -4,6 +4,7 @@ import os
 import streamlit as st
 from celeste_core import ImageArtifact, Provider, list_models
 from celeste_core.enums.capability import Capability
+
 from celeste_image_edit import create_image_editor
 
 
@@ -19,36 +20,26 @@ async def main() -> None:
 
     with st.sidebar:
         st.header("⚙️ Configuration")
-        provider = st.selectbox(
-            "Provider:", [p.value for p in providers], format_func=str.title
-        )
-        models = list_models(
-            provider=Provider(provider), capability=Capability.IMAGE_EDIT
-        )
+        provider = st.selectbox("Provider:", [p.value for p in providers], format_func=str.title)
+        models = list_models(provider=Provider(provider), capability=Capability.IMAGE_EDIT)
         model_names = [m.display_name or m.id for m in models]
-        selected_idx = st.selectbox(
-            "Model:", range(len(models)), format_func=lambda i: model_names[i]
-        )
+        selected_idx = st.selectbox("Model:", range(len(models)), format_func=lambda i: model_names[i])
         model = models[selected_idx].id
 
     st.markdown(f"*Powered by {provider.title()}*")
 
     # Image input
-    uploaded_file = st.file_uploader(
-        "Choose an image", type=["jpg", "jpeg", "png"]
-    ) or st.selectbox(
+    uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"]) or st.selectbox(
         "Or select from data",
-        [f"data/{f}" for f in os.listdir("data") if f.endswith((".jpg", ".png"))]
-        if os.path.exists("data")
-        else [],
+        [f"data/{f}" for f in os.listdir("data") if f.endswith((".jpg", ".png"))] if os.path.exists("data") else [],
     )
 
     if uploaded_file:
-        image_data = (
-            uploaded_file.read()
-            if hasattr(uploaded_file, "read")
-            else open(uploaded_file, "rb").read()
-        )
+        if hasattr(uploaded_file, "read"):
+            image_data = uploaded_file.read()
+        else:
+            with open(uploaded_file, "rb") as f:
+                image_data = f.read()
         st.image(image_data, caption="Original Image", use_container_width=True)
         image = ImageArtifact(data=image_data)
 

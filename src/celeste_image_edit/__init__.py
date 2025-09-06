@@ -24,9 +24,7 @@ def create_image_editor(provider: str | Provider, **kwargs: Any) -> BaseImageEdi
     Returns:
         An instance of an image generator
     """
-    provider_enum: Provider = (
-        provider if isinstance(provider, Provider) else Provider(provider)
-    )
+    provider_enum: Provider = provider if isinstance(provider, Provider) else Provider(provider)
 
     if provider_enum not in PROVIDER_MAPPING:
         raise ValueError(f"No editor mapping for provider: {provider_enum}")
