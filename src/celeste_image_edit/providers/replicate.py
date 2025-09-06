@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import io
-from typing import Any
+import urllib.request
+from typing import Any, cast
 
 import replicate
 from celeste_core import ImageArtifact
@@ -51,9 +52,6 @@ class ReplicateImageEditor(BaseImageEditor):
 
     def _download(self, url: str) -> bytes:
         """Download image from URL."""
-        import urllib.request
-        from typing import cast
-
         with urllib.request.urlopen(url) as resp:
             return cast(bytes, resp.read())
 
